@@ -1,0 +1,23 @@
+{
+  "name": "ms-clientes",
+  "version": "1.0.0",
+  "description": "Microservicio de gestión de clientes",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "@hapi/hapi": "^21.3.2",
+    "@hapi/boom": "^10.0.1",
+    "pg": "^8.11.3",
+    "redis": "^4.6.11",
+    "amqplib": "^0.10.3",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "joi": "^17.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

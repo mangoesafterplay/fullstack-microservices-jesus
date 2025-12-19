@@ -1,0 +1,187 @@
+version: '3.8'
+
+networks:
+  microservices-network:
+    driver: bridge
+
+services:
+  # Base de datos PostgreSQL para Seguridad y Clientes
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos MySQL para Correos
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-mysql.sql:/docker-entrypoint-initdb.d/init-mysql.sql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_broker
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Microservicio de Seguridad
+  ms-seguridad:
+    build:
+      context: ./ms-seguridad
+      dockerfile: Dockerfile
+    container_name: ms_seguridad
+    environment:
+      NODE_ENV: production
+      PORT: ${MS_SEGURIDAD_PORT}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+    ports:
+      - "${MS_SEGURIDAD_PORT}:${MS_SEGURIDAD_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  # Microservicio de Clientes
+  ms-clientes:
+    build:
+      context: ./ms-clientes
+      dockerfile: Dockerfile
+    container_name: ms_clientes
+    environment:
+      NODE_ENV: production
+      PORT: ${MS_CLIENTES_PORT}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      MS_SEGURIDAD_URL: http://ms-seguridad:${MS_SEGURIDAD_PORT}
+    ports:
+      - "${MS_CLIENTES_PORT}:${MS_CLIENTES_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ms-seguridad:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  # Microservicio de Correos
+  ms-correos:
+    build:
+      context: ./ms-correos
+      dockerfile: Dockerfile
+    container_name: ms_correos
+    environment:
+      NODE_ENV: production
+      PORT: ${MS_CORREOS_PORT}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "${MS_CORREOS_PORT}:${MS_CORREOS_PORT}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  # Frontend Angular
+  frontend:
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile
+    container_name: frontend_angular
+    environment:
+      API_SEGURIDAD_URL: http://localhost:${MS_SEGURIDAD_PORT}
+      API_CLIENTES_URL: http://localhost:${MS_CLIENTES_PORT}
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - ms-seguridad
+      - ms-clientes
+    networks:
+      - microservices-network
+
+volumes:
+  postgres_data:
+  mysql_data:

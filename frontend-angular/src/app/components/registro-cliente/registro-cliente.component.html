@@ -1,0 +1,227 @@
+<div class="registro-container">
+  <div class="registro-card">
+    <!-- Título principal -->
+    <div class="header-section">
+      <h1>Empieza tu registro</h1>
+      <p class="subtitle">Completa tus datos personales</p>
+    </div>
+
+    <!-- Sección de selección de bono -->
+    <div class="bono-section">
+      <h2>Elige tu bono de bienvenida</h2>
+      
+      <div class="bono-cards">
+        <!-- Bono 1 -->
+        <div class="bono-card" 
+             [class.selected]="selectedBono === 1"
+             (click)="selectBono(1)">
+          <div class="bono-header">
+            <span class="bono-number">1</span>
+            <div class="bono-title-group">
+              <h3>100 Giros gratis</h3>
+              <p class="bono-subtitle">Para Casino</p>
+            </div>
+          </div>
+          <div class="bono-content">
+            <div class="bono-value">S/ 0</div>
+            <p class="bono-desc">Bonificación especial para juegos de casino</p>
+          </div>
+        </div>
+
+        <!-- Bono 2 -->
+        <div class="bono-card" 
+             [class.selected]="selectedBono === 2"
+             (click)="selectBono(2)">
+          <div class="bono-header">
+            <span class="bono-number">2</span>
+            <div class="bono-title-group">
+              <h3>Apuesta gratis S/ 50</h3>
+              <p class="bono-subtitle">Para Deportes</p>
+            </div>
+          </div>
+          <div class="bono-content">
+            <div class="bono-value">S/ 50</div>
+            <p class="bono-desc">Crédito para apuestas deportivas</p>
+            <a href="#" class="terms-link">Términos y condiciones</a>
+          </div>
+        </div>
+
+        <!-- Bono 3 -->
+        <div class="bono-card" 
+             [class.selected]="selectedBono === 3"
+             (click)="selectBono(3)">
+          <div class="bono-header">
+            <span class="bono-number">3</span>
+            <div class="bono-title-group">
+              <h3>Sin bono</h3>
+              <p class="bono-subtitle">Registro básico</p>
+            </div>
+          </div>
+          <div class="bono-content">
+            <div class="bono-value">S/ 0</div>
+            <p class="bono-desc">Regístrate sin bonificación inicial</p>
+            <p class="change-mind">Escríbenos si cambias de opinión</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Token Section - Ahora con *ngIf para asegurar que el form esté inicializado -->
+    <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+      <div class="token-section" 
+           [class.valid]="tokenValid === true"
+           [class.invalid]="tokenValid === false">
+        <label>Token de Seguridad *</label>
+        <p class="field-hint">Campo obligatorio</p>
+        
+        <div class="token-input-group">
+          <div class="document-type">
+            <span>N° de documento *</span>
+          </div>
+          
+          <div class="token-input-wrapper">
+            <input
+              type="text"
+              formControlName="token"
+              maxlength="8"
+              placeholder="12345678"
+              (input)="onTokenChange()"
+              [disabled]="loadingToken"
+            />
+            
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="generateToken()"
+              [disabled]="loadingToken"
+            >
+              {{ loadingToken ? 'Generando...' : 'Generar Nuevo' }}
+            </button>
+          </div>
+        </div>
+        
+        <span class="token-status" *ngIf="tokenValid === true">
+          ✓ Token válido
+        </span>
+        <span class="token-status invalid" *ngIf="tokenValid === false">
+          ✗ Token inválido
+        </span>
+      </div>
+
+      <!-- Alertas -->
+      <div class="alert alert-success" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+      
+      <div class="alert alert-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Formulario de datos personales -->
+      <h3>1. Ingresa tus nombres y apellidos exactamente como se muestran en tu documento.</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombres *</label>
+          <input type="text" formControlName="nombres" />
+          <span class="error-message" *ngIf="registroForm.get('nombres')?.touched && registroForm.get('nombres')?.invalid">
+            {{ getErrorMessage('nombres') }}
+          </span>
+        </div>
+        
+        <div class="form-group">
+          <label>Apellidos *</label>
+          <input type="text" formControlName="apellidos" />
+          <span class="error-message" *ngIf="registroForm.get('apellidos')?.touched && registroForm.get('apellidos')?.invalid">
+            {{ getErrorMessage('apellidos') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Fecha de nacimiento -->
+      <div class="form-group">
+        <label>Fecha de nacimiento *</label>
+        <div class="date-inputs">
+          <select formControlName="anio">
+            <option value="">Año</option>
+            <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+          </select>
+          
+          <select formControlName="mes">
+            <option value="">Mes</option>
+            <option *ngFor="let month of months" [value]="month.value">{{ month.name }}</option>
+          </select>
+          
+          <select formControlName="dia">
+            <option value="">Día</option>
+            <option *ngFor="let day of days" [value]="day">{{ day }}</option>
+          </select>
+        </div>
+        <span class="error-message" *ngIf="(registroForm.get('anio')?.touched || registroForm.get('mes')?.touched || registroForm.get('dia')?.touched) 
+                && (registroForm.get('anio')?.invalid || registroForm.get('mes')?.invalid || registroForm.get('dia')?.invalid)">
+          Fecha de nacimiento es requerida
+        </span>
+      </div>
+
+      <!-- Tipo de documento -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de Documento *</label>
+          <select formControlName="tipo_documento">
+            <option *ngFor="let tipo of tiposDocumento" [value]="tipo">
+              {{ tipo }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Número de Documento *</label>
+          <input type="text" formControlName="numero_documento" />
+          <span class="error-message" *ngIf="registroForm.get('numero_documento')?.touched && registroForm.get('numero_documento')?.invalid">
+            {{ getErrorMessage('numero_documento') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Contacto -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" formControlName="email" />
+          <span class="error-message" *ngIf="registroForm.get('email')?.touched && registroForm.get('email')?.invalid">
+            {{ getErrorMessage('email') }}
+          </span>
+        </div>
+        
+        <div class="form-group">
+          <label>Teléfono</label>
+          <div class="phone-input">
+            <span class="country-code">+51</span>
+            <input type="tel" formControlName="telefono" placeholder="Número de celular" />
+          </div>
+          <span class="error-message" *ngIf="registroForm.get('telefono')?.touched && registroForm.get('telefono')?.invalid">
+            {{ getErrorMessage('telefono') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Campo oculto para bono_bienvenida -->
+      <input type="hidden" formControlName="bono_bienvenida" />
+
+      <!-- Botón de registro -->
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="loading || registroForm.invalid || !tokenValid || selectedBono === null"
+      >
+        {{ loading ? 'Registrando...' : 'CONTINUAR' }}
+      </button>
+    </form>
+
+    <!-- Enlaces de ayuda -->
+    <div class="help-links">
+      <p><a href="#">¿Necesita Ayuda?</a></p>
+      <p><a href="#">¿Ya tienes cuenta? Inicia sesión aquí</a></p>
+    </div>
+  </div>
+</div>

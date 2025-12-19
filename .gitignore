@@ -1,0 +1,35 @@
+﻿# Node modules
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+*.env.local
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Angular
+.angular/
+*/.angular/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite
+*.db

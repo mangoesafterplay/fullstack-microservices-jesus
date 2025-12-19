@@ -1,0 +1,20 @@
+{
+  "name": "ms-seguridad",
+  "version": "1.0.0",
+  "description": "Microservicio de seguridad y tokens",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "@hapi/hapi": "^21.3.2",
+    "@hapi/boom": "^10.0.1",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "joi": "^17.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
