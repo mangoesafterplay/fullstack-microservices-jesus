@@ -5,7 +5,7 @@ networks:
     driver: bridge
 
 services:
-  # Base de datos PostgreSQL para Seguridad y Clientes
+  # PostgreSQL (Seguridad y Clientes)
   postgres:
     image: postgres:15-alpine
     container_name: postgres_db
@@ -26,7 +26,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Base de datos MySQL para Correos
+  # MySQL (Correos)
   mysql:
     image: mysql:8.0
     container_name: mysql_db
@@ -80,7 +80,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Microservicio de Seguridad
+  # Microservicio Seguridad
   ms-seguridad:
     build:
       context: ./ms-seguridad
@@ -102,7 +102,7 @@ services:
     networks:
       - microservices-network
 
-  # Microservicio de Clientes
+  # Microservicio Clientes
   ms-clientes:
     build:
       context: ./ms-clientes
@@ -137,7 +137,7 @@ services:
     networks:
       - microservices-network
 
-  # Microservicio de Correos
+  # Microservicio Correos
   ms-correos:
     build:
       context: ./ms-correos
@@ -165,15 +165,12 @@ services:
     networks:
       - microservices-network
 
-  # Frontend Angular
+  # Frontend Angular (solo sirve estáticos)
   frontend:
     build:
       context: ./frontend-angular
       dockerfile: Dockerfile
     container_name: frontend_angular
-    environment:
-      API_SEGURIDAD_URL: http://localhost:${MS_SEGURIDAD_PORT}
-      API_CLIENTES_URL: http://localhost:${MS_CLIENTES_PORT}
     ports:
       - "${FRONTEND_PORT}:80"
     depends_on:

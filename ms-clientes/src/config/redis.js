@@ -9,8 +9,8 @@ const getRedisClient = async () => {
 
   redisClient = redis.createClient({
     socket: {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: process.env.REDIS_PORT || 6379,
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
       reconnectStrategy: (retries) => {
         if (retries > 10) {
           console.error('❌ Demasiados reintentos de conexión a Redis');

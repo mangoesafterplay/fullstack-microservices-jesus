@@ -14,7 +14,7 @@ COPY . .
 # Exponer puerto
 EXPOSE 3001
 
-# Variables de entorno por defecto (se sobrescriben con docker-compose)
+# Variables de entorno por defecto
 ENV NODE_ENV=production
 ENV PORT=3001
 
